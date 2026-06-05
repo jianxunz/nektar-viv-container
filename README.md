@@ -42,8 +42,8 @@ docker run --rm -it -v "$PWD:/workspace" nektar-viv:5.9.0 \
 Create a GitHub repository, push this folder to `main`, then GitHub Actions will publish:
 
 ```text
-ghcr.io/<your-github-user-or-org>/nektar-viv:latest
-ghcr.io/<your-github-user-or-org>/nektar-viv:5.9.0-viv
+ghcr.io/jianxunz/nektar-viv:latest
+ghcr.io/jianxunz/nektar-viv:5.9.0-viv
 ```
 
 The workflow is in `.github/workflows/container.yml`.
@@ -53,7 +53,7 @@ The workflow is in `.github/workflows/container.yml`.
 After the GHCR image exists:
 
 ```bash
-apptainer pull docker://ghcr.io/<your-github-user-or-org>/nektar-viv:latest
+apptainer pull docker://ghcr.io/jianxunz/nektar-viv:latest
 ```
 
 Or edit `mvapich.def` and replace `YOUR_GITHUB_USERNAME`.
