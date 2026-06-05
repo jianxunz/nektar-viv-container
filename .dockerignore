@@ -1,0 +1,10 @@
+.git
+.github
+*.sif
+*.log
+*.fld
+*.chk
+*.dat
+build
+dist
+ThirdParty

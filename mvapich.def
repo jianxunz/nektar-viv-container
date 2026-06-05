@@ -1,0 +1,11 @@
+Bootstrap: docker
+From: ghcr.io/YOUR_GITHUB_USERNAME/nektar-viv:latest
+
+%environment
+    export NEKTAR_HOME=/opt/nektar
+    export PATH=/opt/nektar/bin:$PATH
+    export LD_LIBRARY_PATH=/opt/nektar/lib:$LD_LIBRARY_PATH
+
+%runscript
+    . /opt/start.sh
+    exec "$@"
