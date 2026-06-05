@@ -45,7 +45,8 @@ RUN cmake -S /src/nektar -B /build/nektar \
         -DNEKTAR_USE_HDF5=OFF \
         -DNEKTAR_USE_SCOTCH=OFF \
         -DNEKTAR_USE_FFT=ON && \
-    cmake --build /build/nektar --target IncNavierStokesSolver -j "${BUILD_JOBS}"
+    cmake --build /build/nektar --target IncNavierStokesSolver -j "${BUILD_JOBS}" && \
+    cmake --install /build/nektar
 
 FROM ubuntu:22.04
 
@@ -69,7 +70,7 @@ RUN apt-get update -y && \
         zlib1g && \
     rm -rf /var/lib/apt/lists/*
 
-COPY --from=builder /build/nektar/dist /opt/nektar
+COPY --from=builder /opt/nektar /opt/nektar
 COPY scripts/start.sh /opt/start.sh
 
 ENV NEKTAR_HOME=/opt/nektar
