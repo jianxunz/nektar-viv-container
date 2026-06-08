@@ -44,7 +44,7 @@ RUN cmake -S /src/nektar -B /build/nektar \
         -DNEKTAR_USE_MPI=OFF \
         -DNEKTAR_USE_HDF5=OFF \
         -DNEKTAR_USE_SCOTCH=OFF \
-        -DNEKTAR_USE_FFT=ON && \
+        -DNEKTAR_USE_FFTW=ON && \
     cmake --build /build/nektar --target IncNavierStokesSolver -j "${BUILD_JOBS}" && \
     cmake --install /build/nektar
 
