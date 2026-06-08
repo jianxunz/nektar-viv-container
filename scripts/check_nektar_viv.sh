@@ -24,4 +24,11 @@ fi
 
 IncNavierStokesSolver --help > /tmp/nektar-viv-help.txt
 
+if ! grep -Eq -- '--use-ptscotch|--use-scotch' /tmp/nektar-viv-help.txt; then
+    echo "ERROR: IncNavierStokesSolver was built without Scotch/PtScotch partitioner support."
+    echo "Rebuild with -DNEKTAR_USE_SCOTCH=ON."
+    cat /tmp/nektar-viv-help.txt
+    exit 1
+fi
+
 echo "Nektar++ VIV container check passed."

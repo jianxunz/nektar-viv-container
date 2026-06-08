@@ -17,7 +17,9 @@ RUN apt-get update -y && \
         patch \
         python3 \
         build-essential \
+        bison \
         cmake \
+        flex \
         gfortran \
         mpich \
         libmpich-dev \
@@ -52,7 +54,8 @@ RUN cmake -S /src/nektar -B /build/nektar \
         -DNEKTAR_BUILD_UNIT_TESTS=OFF \
         -DNEKTAR_USE_MPI=ON \
         -DNEKTAR_USE_HDF5=OFF \
-        -DNEKTAR_USE_SCOTCH=OFF \
+        -DNEKTAR_USE_SCOTCH=ON \
+        -DTHIRDPARTY_BUILD_SCOTCH=ON \
         -DNEKTAR_USE_FFTW=ON && \
     cmake --build /build/nektar --target IncNavierStokesSolver -j "${BUILD_JOBS}" && \
     cmake --install /build/nektar

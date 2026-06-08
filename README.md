@@ -31,7 +31,8 @@ docker run --rm -it -v "$PWD:/workspace" nektar-viv:5.9.0 \
 ```
 
 The Docker build also runs `/opt/check_nektar_viv.sh`, which fails the build if
-`IncNavierStokesSolver` is not linked to MPI or FFTW.
+`IncNavierStokesSolver` is not linked to MPI/FFTW or does not expose a
+Scotch/PtScotch partitioner.
 
 Example case run:
 
@@ -75,7 +76,7 @@ srun -n 8 --mpi=pmi2 singularity exec --bind "$PWD:/opt/uio" nektar-viv_latest.s
   bash -lc 'source /opt/start.sh && cd /opt/uio && IncNavierStokesSolver --npz 1 base_flow.xml'
 ```
 
-If the Slurm log repeats the Nektar session summary hundreds of times and all ranks write the same `base_flow_0.chk`, the image is serial. Rebuild it after this repository change so `IncNavierStokesSolver` links against MPI. You can also check the image manually:
+If the Slurm log repeats the Nektar session summary hundreds of times and all ranks write the same `base_flow_0.chk`, the image is serial. Rebuild it after this repository change so `IncNavierStokesSolver` links against MPI. If the log says `Valid partitioner not found! Either Scotch or METIS should be used.`, rebuild after the PT-Scotch change so Nektar can split the mesh across in-plane MPI ranks. You can also check the image manually:
 
 ```bash
 singularity exec nektar-viv_latest.sif /opt/check_nektar_viv.sh
