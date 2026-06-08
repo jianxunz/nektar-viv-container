@@ -2,7 +2,7 @@
 
 Container recipe for Nektar++ 5.9.0 with the patched `MovingBody` forcing used for pinned-pinned flexible-cylinder VIV runs.
 
-This follows the compact style of `j34ni/nektar-container`, but builds Nektar++ from source so the image contains the updated `ForcingMovingBody.cpp` implementation instead of the unmodified conda-forge binary package.
+This follows the compact style of the existing `nektar-container`, but builds Nektar++ from source so the image contains the updated `ForcingMovingBody.cpp` implementation instead of the unmodified official image. The image is built with MPI and FFTW enabled for homogeneous flexible-cylinder runs on Slurm clusters.
 
 ## What Is Patched
 
@@ -30,11 +30,21 @@ docker run --rm -it -v "$PWD:/workspace" nektar-viv:5.9.0 \
   'source /opt/start.sh && IncNavierStokesSolver --help'
 ```
 
+The Docker build also runs `/opt/check_nektar_viv.sh`, which fails the build if
+`IncNavierStokesSolver` is not linked to MPI or FFTW.
+
 Example case run:
 
 ```bash
 docker run --rm -it -v "$PWD:/workspace" nektar-viv:5.9.0 \
   'source /opt/start.sh && cd /workspace && IncNavierStokesSolver base_flow_PIN.xml'
+```
+
+MPI smoke test:
+
+```bash
+docker run --rm -it -v "$PWD:/workspace" nektar-viv:5.9.0 \
+  'source /opt/start.sh && mpirun -np 2 IncNavierStokesSolver --help'
 ```
 
 ## Publish On GitHub
@@ -58,9 +68,22 @@ apptainer pull docker://ghcr.io/jianxunz/nektar-viv:latest
 
 Or edit `mvapich.def` and replace `YOUR_GITHUB_USERNAME`.
 
+On Betzy/Slurm, use the MPI-enabled image with `srun`, for example:
+
+```bash
+srun -n 8 --mpi=pmi2 singularity exec --bind "$PWD:/opt/uio" nektar-viv_latest.sif \
+  bash -lc 'source /opt/start.sh && cd /opt/uio && IncNavierStokesSolver --npz 1 base_flow.xml'
+```
+
+If the Slurm log repeats the Nektar session summary hundreds of times and all ranks write the same `base_flow_0.chk`, the image is serial. Rebuild it after this repository change so `IncNavierStokesSolver` links against MPI. You can also check the image manually:
+
+```bash
+singularity exec nektar-viv_latest.sif /opt/check_nektar_viv.sh
+```
+
 ## Notes
 
-The Dockerfile currently builds the `IncNavierStokesSolver` target and copies the build-tree `dist` folder into the runtime image. This keeps the image focused on the flexible-cylinder VIV workflow. If you need all Nektar++ solvers, change the build command in `Dockerfile` from:
+The Dockerfile currently builds the `IncNavierStokesSolver` target and installs Nektar++ into `/opt/nektar` in the runtime image. This keeps the image focused on the flexible-cylinder VIV workflow. The generic `nektar-container` image is better for mesh-conversion utilities such as `NekMesh` and `FieldConvert`; this VIV image is better for running the patched solver. If you need all Nektar++ tools in the VIV image, change the build command in `Dockerfile` from:
 
 ```bash
 cmake --build /build/nektar --target IncNavierStokesSolver

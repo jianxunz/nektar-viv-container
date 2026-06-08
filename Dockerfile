@@ -1,5 +1,9 @@
 FROM ubuntu:22.04 AS builder
 
+LABEL org.opencontainers.image.title="Nektar++ VIV container"
+LABEL org.opencontainers.image.description="Nektar++ 5.9.0 with patched MovingBody forcing for flexible-cylinder VIV"
+LABEL org.opencontainers.image.source="https://github.com/jianxunz/nektar-viv-container"
+
 ARG DEBIAN_FRONTEND=noninteractive
 ARG NEKTAR_REF=v5.9.0
 ARG NEKTAR_SOURCE_URL=https://gitlab.nektar.info/nektar/nektar/-/archive/${NEKTAR_REF}/nektar-${NEKTAR_REF}.tar.gz
@@ -15,6 +19,8 @@ RUN apt-get update -y && \
         build-essential \
         cmake \
         gfortran \
+        mpich \
+        libmpich-dev \
         libboost-iostreams-dev \
         libboost-program-options-dev \
         libboost-system-dev \
@@ -37,11 +43,14 @@ RUN python3 /tmp/patch_moving_body.py /src/nektar
 RUN cmake -S /src/nektar -B /build/nektar \
         -DCMAKE_BUILD_TYPE=Release \
         -DCMAKE_INSTALL_PREFIX=/opt/nektar \
+        -DCMAKE_C_COMPILER=mpicc \
+        -DCMAKE_CXX_COMPILER=mpicxx \
+        -DCMAKE_Fortran_COMPILER=mpifort \
         -DNEKTAR_BUILD_TESTS=OFF \
         -DNEKTAR_BUILD_DEMOS=OFF \
         -DNEKTAR_BUILD_DOC=OFF \
         -DNEKTAR_BUILD_UNIT_TESTS=OFF \
-        -DNEKTAR_USE_MPI=OFF \
+        -DNEKTAR_USE_MPI=ON \
         -DNEKTAR_USE_HDF5=OFF \
         -DNEKTAR_USE_SCOTCH=OFF \
         -DNEKTAR_USE_FFTW=ON && \
@@ -50,6 +59,10 @@ RUN cmake -S /src/nektar -B /build/nektar \
 
 FROM ubuntu:22.04
 
+LABEL org.opencontainers.image.title="Nektar++ VIV container"
+LABEL org.opencontainers.image.description="Nektar++ 5.9.0 with patched MovingBody forcing for flexible-cylinder VIV"
+LABEL org.opencontainers.image.source="https://github.com/jianxunz/nektar-viv-container"
+
 ARG DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get update -y && \
@@ -57,6 +70,7 @@ RUN apt-get update -y && \
         ca-certificates \
         bash \
         vim-tiny \
+        mpich \
         libgfortran5 \
         libgomp1 \
         libstdc++6 \
@@ -72,10 +86,14 @@ RUN apt-get update -y && \
 
 COPY --from=builder /opt/nektar /opt/nektar
 COPY scripts/start.sh /opt/start.sh
+COPY scripts/check_nektar_viv.sh /opt/check_nektar_viv.sh
 
 ENV NEKTAR_HOME=/opt/nektar
 ENV PATH=/opt/nektar/bin:${PATH}
 ENV LD_LIBRARY_PATH=/opt/nektar/lib:${LD_LIBRARY_PATH}
+RUN chmod +x /opt/start.sh /opt/check_nektar_viv.sh && \
+    /opt/check_nektar_viv.sh
+
 WORKDIR /workspace
 
 ENTRYPOINT ["/bin/bash", "-lc"]
