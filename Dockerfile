@@ -7,7 +7,7 @@ LABEL org.opencontainers.image.source="https://github.com/jianxunz/nektar-viv-co
 ARG DEBIAN_FRONTEND=noninteractive
 ARG NEKTAR_REF=v5.9.0
 ARG NEKTAR_SOURCE_URL=https://gitlab.nektar.info/nektar/nektar/-/archive/${NEKTAR_REF}/nektar-${NEKTAR_REF}.tar.gz
-ARG BUILD_JOBS=4
+ARG BUILD_JOBS=2
 
 RUN apt-get update -y && \
     apt-get install -y --no-install-recommends \
@@ -31,12 +31,16 @@ RUN wget -q -nc --no-check-certificate -P /var/tmp \
 ENV TZ="Europe/Oslo"
 ENV PATH="/opt/conda/bin:${PATH}"
 ENV LD_LIBRARY_PATH="/opt/conda/lib:${LD_LIBRARY_PATH}"
+ENV BOOST_ROOT=/opt/conda
+ENV BOOST_INCLUDEDIR=/opt/conda/include
+ENV BOOST_LIBRARYDIR=/opt/conda/lib
+ENV FFTW_HOME=/opt/conda
 
 RUN . /opt/conda/etc/profile.d/conda.sh && \
     mamba install -y -c conda-forge \
         blas \
         boost-cpp \
-        cmake \
+        "cmake>=3.24,<4" \
         fftw \
         libblas \
         liblapack \
@@ -59,6 +63,10 @@ RUN cmake -S /src/nektar -B /build/nektar \
         -DCMAKE_BUILD_TYPE=Release \
         -DCMAKE_INSTALL_PREFIX=/opt/nektar \
         -DCMAKE_PREFIX_PATH=/opt/conda \
+        -DBOOST_ROOT=/opt/conda \
+        -DBoost_NO_SYSTEM_PATHS=ON \
+        -DFFTW_INCLUDE_DIR=/opt/conda/include \
+        -DFFTW_LIBRARY=/opt/conda/lib/libfftw3.so \
         -DCMAKE_C_COMPILER=mpicc \
         -DCMAKE_CXX_COMPILER=mpicxx \
         -DCMAKE_Fortran_COMPILER=mpifort \
@@ -66,13 +74,26 @@ RUN cmake -S /src/nektar -B /build/nektar \
         -DNEKTAR_BUILD_DEMOS=OFF \
         -DNEKTAR_BUILD_DOC=OFF \
         -DNEKTAR_BUILD_UNIT_TESTS=OFF \
+        -DNEKTAR_BUILD_UTILITIES=OFF \
+        -DNEKTAR_SOLVER_ACOUSTIC=OFF \
+        -DNEKTAR_SOLVER_ADR=OFF \
+        -DNEKTAR_SOLVER_CARDIAC_EP=OFF \
+        -DNEKTAR_SOLVER_COMPRESSIBLE_FLOW=OFF \
+        -DNEKTAR_SOLVER_DIFFUSION=OFF \
+        -DNEKTAR_SOLVER_DUMMY=OFF \
+        -DNEKTAR_SOLVER_ELASTICITY=OFF \
+        -DNEKTAR_SOLVER_INCNAVIERSTOKES=ON \
+        -DNEKTAR_SOLVER_MMF=OFF \
+        -DNEKTAR_SOLVER_PULSEWAVE=OFF \
+        -DNEKTAR_SOLVER_REVIEWSOLUTION=OFF \
+        -DNEKTAR_SOLVER_SHALLOW_WATER=OFF \
         -DNEKTAR_USE_MPI=ON \
         -DNEKTAR_USE_HDF5=OFF \
         -DNEKTAR_USE_SCOTCH=ON \
         -DTHIRDPARTY_BUILD_SCOTCH=ON \
-        -DNEKTAR_USE_FFTW=ON && \
-    cmake --build /build/nektar --target IncNavierStokesSolver -j "${BUILD_JOBS}" && \
-    cmake --install /build/nektar
+        -DNEKTAR_USE_FFTW=ON
+
+RUN cmake --build /build/nektar --target install -j "${BUILD_JOBS}"
 
 FROM ubuntu:22.04
 

@@ -17,10 +17,10 @@ This follows the compact style of `j34ni/nektar-container`: Miniforge, conda-for
 docker build -t nektar-viv:5.9.0 .
 ```
 
-For a smaller GitHub Actions runner, reduce parallelism:
+The default build uses two compile jobs, which is safer for GitHub Actions runners. On a larger machine, increase parallelism:
 
 ```bash
-docker build --build-arg BUILD_JOBS=2 -t nektar-viv:5.9.0 .
+docker build --build-arg BUILD_JOBS=4 -t nektar-viv:5.9.0 .
 ```
 
 ## Run
@@ -84,14 +84,4 @@ singularity exec nektar-viv_latest.sif /opt/check_nektar_viv.sh
 
 ## Notes
 
-The Dockerfile currently builds the `IncNavierStokesSolver` target and installs Nektar++ into `/opt/nektar` in the runtime image. This keeps the image focused on the flexible-cylinder VIV workflow. The reference `j34ni/nektar-container` image is better when the unmodified conda-forge Nektar++ package is enough; this VIV image is better for running the patched solver. If you need all Nektar++ tools in the VIV image, change the build command in `Dockerfile` from:
-
-```bash
-cmake --build /build/nektar --target IncNavierStokesSolver
-```
-
-to:
-
-```bash
-cmake --build /build/nektar
-```
+The Dockerfile configures Nektar++ with only `IncNavierStokesSolver` enabled, then builds the CMake `install` target into `/opt/nektar`. This keeps the image focused on the flexible-cylinder VIV workflow and avoids installing unbuilt solver targets. The reference `j34ni/nektar-container` image is better when the unmodified conda-forge Nektar++ package is enough; this VIV image is better for running the patched solver. If you need all Nektar++ tools in the VIV image, remove the `NEKTAR_SOLVER_*` disable flags and set `NEKTAR_BUILD_UTILITIES=ON` in `Dockerfile`.
