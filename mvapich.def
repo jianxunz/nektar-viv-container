@@ -2,9 +2,10 @@ Bootstrap: docker
 From: ghcr.io/YOUR_GITHUB_USERNAME/nektar-viv:latest
 
 %environment
+    export TZ="Europe/Oslo"
     export NEKTAR_HOME=/opt/nektar
-    export PATH=/opt/nektar/bin:$PATH
-    export LD_LIBRARY_PATH=/opt/nektar/lib:$LD_LIBRARY_PATH
+    export PATH=/opt/nektar/bin:/opt/conda/bin:$PATH
+    export LD_LIBRARY_PATH=/opt/nektar/lib:/opt/conda/lib:$LD_LIBRARY_PATH
 
 %runscript
     . /opt/start.sh

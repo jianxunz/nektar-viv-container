@@ -11,10 +11,14 @@ def replace_once(text, old, new, description):
     return text.replace(old, new, 1)
 
 
-def regex_replace_once(text, pattern, repl, description):
+def regex_replace_once(text, pattern, repl, description, required=False, already=None):
     new_text, count = re.subn(pattern, repl, text, count=1, flags=re.S)
     if count:
         print(f"patch: {description}")
+    elif already and already in text:
+        print(f"patch: {description} already present")
+    elif required:
+        raise SystemExit(f"could not locate {description}")
     return new_text
 
 
@@ -41,6 +45,8 @@ def main():
         "                            (static_cast<NekDouble>(k) + 0.5) *\n"
         "                            (static_cast<NekDouble>(i) + 1.0))",
         "Pinned-Pinned forward sine transform half-index",
+        required=True,
+        already="(static_cast<NekDouble>(k) + 0.5)",
     )
 
     text = regex_replace_once(
@@ -51,6 +57,8 @@ def main():
         "                            (static_cast<NekDouble>(i) + 0.5)) *\n"
         "                        2.0 / static_cast<NekDouble>(N)",
         "Pinned-Pinned inverse sine transform half-index",
+        required=True,
+        already="2.0 / static_cast<NekDouble>(N)",
     )
 
     if "StructReducedVelocity" not in text:

@@ -6,6 +6,11 @@ source /opt/start.sh
 solver="$(command -v IncNavierStokesSolver)"
 echo "Checking Nektar++ VIV solver: ${solver}"
 
+if ! command -v mpirun >/dev/null; then
+    echo "ERROR: mpirun is not available. The MVAPICH runtime is missing from PATH."
+    exit 1
+fi
+
 ldd "${solver}" > /tmp/nektar-viv-ldd.txt
 
 if ! grep -Eiq 'libmpi|libmpich' /tmp/nektar-viv-ldd.txt; then

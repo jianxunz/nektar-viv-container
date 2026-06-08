@@ -2,7 +2,7 @@
 
 Container recipe for Nektar++ 5.9.0 with the patched `MovingBody` forcing used for pinned-pinned flexible-cylinder VIV runs.
 
-This follows the compact style of the existing `nektar-container`, but builds Nektar++ from source so the image contains the updated `ForcingMovingBody.cpp` implementation instead of the unmodified official image. The image is built with MPI and FFTW enabled for homogeneous flexible-cylinder runs on Slurm clusters.
+This follows the compact style of `j34ni/nektar-container`: Miniforge, conda-forge `mvapich=4.1`, `/opt/start.sh`, and the `srun --mpi=pmi2 singularity exec ... source /opt/start.sh` launch pattern. Unlike the reference image, this image builds Nektar++ from source so it contains the updated `ForcingMovingBody.cpp` implementation instead of the unmodified conda-forge `nektar` package. The image is built with MPI, FFTW, and PT-Scotch enabled for homogeneous flexible-cylinder runs on Slurm clusters.
 
 ## What Is Patched
 
@@ -31,8 +31,8 @@ docker run --rm -it -v "$PWD:/workspace" nektar-viv:5.9.0 \
 ```
 
 The Docker build also runs `/opt/check_nektar_viv.sh`, which fails the build if
-`IncNavierStokesSolver` is not linked to MPI/FFTW or does not expose a
-Scotch/PtScotch partitioner.
+`IncNavierStokesSolver` is not linked to MPI/FFTW, `mpirun` is unavailable, or
+the solver does not expose a Scotch/PtScotch partitioner.
 
 Example case run:
 
@@ -84,7 +84,7 @@ singularity exec nektar-viv_latest.sif /opt/check_nektar_viv.sh
 
 ## Notes
 
-The Dockerfile currently builds the `IncNavierStokesSolver` target and installs Nektar++ into `/opt/nektar` in the runtime image. This keeps the image focused on the flexible-cylinder VIV workflow. The generic `nektar-container` image is better for mesh-conversion utilities such as `NekMesh` and `FieldConvert`; this VIV image is better for running the patched solver. If you need all Nektar++ tools in the VIV image, change the build command in `Dockerfile` from:
+The Dockerfile currently builds the `IncNavierStokesSolver` target and installs Nektar++ into `/opt/nektar` in the runtime image. This keeps the image focused on the flexible-cylinder VIV workflow. The reference `j34ni/nektar-container` image is better when the unmodified conda-forge Nektar++ package is enough; this VIV image is better for running the patched solver. If you need all Nektar++ tools in the VIV image, change the build command in `Dockerfile` from:
 
 ```bash
 cmake --build /build/nektar --target IncNavierStokesSolver

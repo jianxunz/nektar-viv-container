@@ -18,20 +18,33 @@ RUN apt-get update -y && \
         python3 \
         build-essential \
         bison \
-        cmake \
         flex \
         gfortran \
-        mpich \
-        libmpich-dev \
-        libboost-iostreams-dev \
-        libboost-program-options-dev \
-        libboost-system-dev \
-        libfftw3-dev \
-        libtinyxml-dev \
-        libblas-dev \
-        liblapack-dev \
-        zlib1g-dev && \
+        tzdata && \
     rm -rf /var/lib/apt/lists/*
+
+RUN wget -q -nc --no-check-certificate -P /var/tmp \
+        https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-Linux-x86_64.sh && \
+    bash /var/tmp/Miniforge3-Linux-x86_64.sh -b -p /opt/conda && \
+    rm /var/tmp/Miniforge3-Linux-x86_64.sh
+
+ENV TZ="Europe/Oslo"
+ENV PATH="/opt/conda/bin:${PATH}"
+ENV LD_LIBRARY_PATH="/opt/conda/lib:${LD_LIBRARY_PATH}"
+
+RUN . /opt/conda/etc/profile.d/conda.sh && \
+    mamba install -y -c conda-forge \
+        blas \
+        boost-cpp \
+        cmake \
+        fftw \
+        libblas \
+        liblapack \
+        mvapich=4.1 \
+        tinyxml \
+        vim \
+        zlib && \
+    conda clean -afy
 
 WORKDIR /src
 RUN mkdir -p /src/nektar && \
@@ -45,6 +58,7 @@ RUN python3 /tmp/patch_moving_body.py /src/nektar
 RUN cmake -S /src/nektar -B /build/nektar \
         -DCMAKE_BUILD_TYPE=Release \
         -DCMAKE_INSTALL_PREFIX=/opt/nektar \
+        -DCMAKE_PREFIX_PATH=/opt/conda \
         -DCMAKE_C_COMPILER=mpicc \
         -DCMAKE_CXX_COMPILER=mpicxx \
         -DCMAKE_Fortran_COMPILER=mpifort \
@@ -73,27 +87,21 @@ RUN apt-get update -y && \
         ca-certificates \
         bash \
         vim-tiny \
-        mpich \
         libgfortran5 \
         libgomp1 \
         libstdc++6 \
-        libfftw3-3 \
-        libtinyxml2.6.2v5 \
-        libboost-iostreams1.74.0 \
-        libboost-program-options1.74.0 \
-        libboost-system1.74.0 \
-        libblas3 \
-        liblapack3 \
-        zlib1g && \
+        tzdata && \
     rm -rf /var/lib/apt/lists/*
 
+COPY --from=builder /opt/conda /opt/conda
 COPY --from=builder /opt/nektar /opt/nektar
 COPY scripts/start.sh /opt/start.sh
 COPY scripts/check_nektar_viv.sh /opt/check_nektar_viv.sh
 
+ENV TZ="Europe/Oslo"
 ENV NEKTAR_HOME=/opt/nektar
-ENV PATH=/opt/nektar/bin:${PATH}
-ENV LD_LIBRARY_PATH=/opt/nektar/lib:${LD_LIBRARY_PATH}
+ENV PATH=/opt/nektar/bin:/opt/conda/bin:${PATH}
+ENV LD_LIBRARY_PATH=/opt/nektar/lib:/opt/conda/lib:${LD_LIBRARY_PATH}
 RUN chmod +x /opt/start.sh /opt/check_nektar_viv.sh && \
     /opt/check_nektar_viv.sh
 
