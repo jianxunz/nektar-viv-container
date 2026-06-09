@@ -32,6 +32,7 @@ ENV TZ="Europe/Oslo"
 ENV PATH="/opt/conda/bin:${PATH}"
 ENV LD_LIBRARY_PATH="/opt/conda/lib:${LD_LIBRARY_PATH}"
 ENV BOOST_ROOT=/opt/conda
+ENV Boost_ROOT=/opt/conda
 ENV BOOST_INCLUDEDIR=/opt/conda/include
 ENV BOOST_LIBRARYDIR=/opt/conda/lib
 ENV FFTW_HOME=/opt/conda
@@ -39,8 +40,8 @@ ENV FFTW_HOME=/opt/conda
 RUN . /opt/conda/etc/profile.d/conda.sh && \
     mamba install -y -c conda-forge \
         blas \
-        boost-cpp \
-        "cmake>=3.24,<4" \
+        "boost-cpp>=1.71,<1.85" \
+        "cmake>=3.24,<3.30" \
         fftw \
         libblas \
         liblapack \
@@ -64,7 +65,9 @@ RUN cmake -S /src/nektar -B /build/nektar \
         -DCMAKE_INSTALL_PREFIX=/opt/nektar \
         -DCMAKE_PREFIX_PATH=/opt/conda \
         -DBOOST_ROOT=/opt/conda \
+        -DBoost_ROOT=/opt/conda \
         -DBoost_NO_SYSTEM_PATHS=ON \
+        -DBoost_NO_WARN_NEW_VERSIONS=ON \
         -DFFTW_INCLUDE_DIR=/opt/conda/include \
         -DFFTW_LIBRARY=/opt/conda/lib/libfftw3.so \
         -DCMAKE_C_COMPILER=mpicc \
