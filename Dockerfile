@@ -74,6 +74,7 @@ RUN . /opt/conda/etc/profile.d/conda.sh && \
     cmake -S /src/nektar -B /build/nektar \
         -DCMAKE_BUILD_TYPE=Release \
         -DCMAKE_INSTALL_PREFIX=/opt/nektar \
+        -DNEKTAR_LIB_DIR=lib \
         -DCMAKE_PREFIX_PATH=/opt/conda \
         -DBOOST_ROOT=/opt/conda \
         -DBoost_ROOT=/opt/conda \
@@ -114,7 +115,21 @@ RUN . /opt/conda/etc/profile.d/conda.sh && \
 
 RUN . /opt/conda/etc/profile.d/conda.sh && \
     conda activate base && \
-    cmake --build /build/nektar --target install -j "${BUILD_JOBS}"
+    cmake --build /build/nektar --target IncNavierStokesSolver \
+        -j "${BUILD_JOBS}" --verbose && \
+    cmake --install /build/nektar --component incnavierstokes-solver && \
+    mkdir -p /opt/nektar/lib /opt/nektar/lib/nektar++ && \
+    if [ -d /build/nektar/ThirdParty/dist/lib ]; then \
+        find /build/nektar/ThirdParty/dist/lib \
+            \( -name 'lib*.so' -o -name 'lib*.so.*' \) \
+            -exec cp -a {} /opt/nektar/lib/nektar++/ \; ; \
+    fi && \
+    find /build/nektar -path /build/nektar/ThirdParty -prune -o \
+        \( -name 'lib*.so' -o -name 'lib*.so.*' \) \
+        -exec cp -a {} /opt/nektar/lib/ \; && \
+    test -x /opt/nektar/bin/IncNavierStokesSolver && \
+    LD_LIBRARY_PATH="/opt/nektar/lib:/opt/nektar/lib/nektar++:/opt/conda/lib:${LD_LIBRARY_PATH:-}" \
+        ldd /opt/nektar/bin/IncNavierStokesSolver
 
 FROM ubuntu:22.04
 
@@ -143,7 +158,7 @@ COPY scripts/check_nektar_viv.sh /opt/check_nektar_viv.sh
 ENV TZ="Europe/Oslo"
 ENV NEKTAR_HOME=/opt/nektar
 ENV PATH=/opt/nektar/bin:/opt/conda/bin:${PATH}
-ENV LD_LIBRARY_PATH=/opt/nektar/lib:/opt/conda/lib:${LD_LIBRARY_PATH}
+ENV LD_LIBRARY_PATH=/opt/nektar/lib:/opt/nektar/lib/nektar++:/opt/conda/lib:${LD_LIBRARY_PATH}
 RUN chmod +x /opt/start.sh /opt/check_nektar_viv.sh && \
     /opt/check_nektar_viv.sh
 
