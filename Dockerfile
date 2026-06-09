@@ -28,6 +28,8 @@ RUN wget -q -nc --no-check-certificate -P /var/tmp \
     bash /var/tmp/Miniforge3-Linux-x86_64.sh -b -p /opt/conda && \
     rm /var/tmp/Miniforge3-Linux-x86_64.sh
 
+SHELL ["/bin/bash", "-lc"]
+
 ENV TZ="Europe/Oslo"
 ENV PATH="/opt/conda/bin:${PATH}"
 ENV LD_LIBRARY_PATH="/opt/conda/lib:${LD_LIBRARY_PATH}"
@@ -38,6 +40,7 @@ ENV BOOST_LIBRARYDIR=/opt/conda/lib
 ENV FFTW_HOME=/opt/conda
 
 RUN . /opt/conda/etc/profile.d/conda.sh && \
+    conda activate base && \
     mamba install -y -c conda-forge \
         blas \
         "boost-cpp>=1.71,<1.85" \
@@ -60,7 +63,13 @@ RUN mkdir -p /src/nektar && \
 COPY scripts/patch_moving_body.py /tmp/patch_moving_body.py
 RUN python3 /tmp/patch_moving_body.py /src/nektar
 
-RUN cmake -S /src/nektar -B /build/nektar \
+RUN . /opt/conda/etc/profile.d/conda.sh && \
+    conda activate base && \
+    command -v cmake && \
+    command -v mpicc && \
+    command -v mpicxx && \
+    command -v gfortran && \
+    cmake -S /src/nektar -B /build/nektar \
         -DCMAKE_BUILD_TYPE=Release \
         -DCMAKE_INSTALL_PREFIX=/opt/nektar \
         -DCMAKE_PREFIX_PATH=/opt/conda \
@@ -72,7 +81,7 @@ RUN cmake -S /src/nektar -B /build/nektar \
         -DFFTW_LIBRARY=/opt/conda/lib/libfftw3.so \
         -DCMAKE_C_COMPILER=mpicc \
         -DCMAKE_CXX_COMPILER=mpicxx \
-        -DCMAKE_Fortran_COMPILER=mpifort \
+        -DCMAKE_Fortran_COMPILER=gfortran \
         -DNEKTAR_BUILD_TESTS=OFF \
         -DNEKTAR_BUILD_DEMOS=OFF \
         -DNEKTAR_BUILD_DOC=OFF \
@@ -94,9 +103,16 @@ RUN cmake -S /src/nektar -B /build/nektar \
         -DNEKTAR_USE_HDF5=OFF \
         -DNEKTAR_USE_SCOTCH=ON \
         -DTHIRDPARTY_BUILD_SCOTCH=ON \
-        -DNEKTAR_USE_FFTW=ON
+        -DNEKTAR_USE_FFTW=ON || \
+    (echo "===== CMakeOutput.log ====="; \
+     cat /build/nektar/CMakeFiles/CMakeOutput.log 2>/dev/null || true; \
+     echo "===== CMakeError.log ====="; \
+     cat /build/nektar/CMakeFiles/CMakeError.log 2>/dev/null || true; \
+     false)
 
-RUN cmake --build /build/nektar --target install -j "${BUILD_JOBS}"
+RUN . /opt/conda/etc/profile.d/conda.sh && \
+    conda activate base && \
+    cmake --build /build/nektar --target install -j "${BUILD_JOBS}"
 
 FROM ubuntu:22.04
 
