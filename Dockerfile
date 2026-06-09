@@ -48,7 +48,9 @@ RUN . /opt/conda/etc/profile.d/conda.sh && \
         fftw \
         libblas \
         liblapack \
-        mvapich=4.1 \
+        "mpich=4.3.*" \
+        "mpich-mpicc=4.3.*" \
+        "mpich-mpicxx=4.3.*" \
         tinyxml \
         vim \
         zlib && \

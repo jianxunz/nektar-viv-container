@@ -2,7 +2,7 @@
 
 Container recipe for Nektar++ 5.9.0 with the patched `MovingBody` forcing used for pinned-pinned flexible-cylinder VIV runs.
 
-This follows the compact style of `j34ni/nektar-container`: Miniforge, conda-forge `mvapich=4.1`, `/opt/start.sh`, and the `srun --mpi=pmi2 singularity exec ... source /opt/start.sh` launch pattern. Unlike the reference image, this image builds Nektar++ from source so it contains the updated `ForcingMovingBody.cpp` implementation instead of the unmodified conda-forge `nektar` package. The image is built with MPI, FFTW, and PT-Scotch enabled for homogeneous flexible-cylinder runs on Slurm clusters.
+This follows the compact style of `j34ni/nektar-container`: Miniforge, `/opt/start.sh`, and the `srun --mpi=pmi2 singularity exec ... source /opt/start.sh` launch pattern. Unlike the reference image, this image builds Nektar++ from source so it contains the updated `ForcingMovingBody.cpp` implementation instead of the unmodified conda-forge `nektar` package. The source build uses conda-forge MPICH compiler wrappers so `mpicc`/`mpicxx` are available during CMake configuration, and the image is built with MPI, FFTW, and PT-Scotch enabled for homogeneous flexible-cylinder runs on Slurm clusters.
 
 ## What Is Patched
 

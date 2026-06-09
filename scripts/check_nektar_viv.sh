@@ -7,7 +7,7 @@ solver="$(command -v IncNavierStokesSolver)"
 echo "Checking Nektar++ VIV solver: ${solver}"
 
 if ! command -v mpirun >/dev/null; then
-    echo "ERROR: mpirun is not available. The MVAPICH runtime is missing from PATH."
+    echo "ERROR: mpirun is not available. The MPI runtime is missing from PATH."
     exit 1
 fi
 
